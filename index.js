@@ -3,8 +3,8 @@
 const mineflayer = require('mineflayer');
 
 // ========== الإعدادات (من متغيرات البيئة / Secrets) ==========
-let host = process.env.easyplay.aternos.me || 'localhost';
-let port = Number(process.env.62029) || 25565;
+let host = process.env.MC_HOST || 'easyplay.aternos.me';
+let port = Number(process.env.MC_PORT) || 62029;
 
 // دعم الشكل ip:port
 if (host.includes(':')) {
@@ -13,10 +13,10 @@ if (host.includes(':')) {
   port = Number(p) || port;
 }
 
-const USERNAME = process.env.AFKBOT || 'AFK_Bot';
-const VERSION = process.env.1.20.4 || undefined; // مثال: 1.20.4 (اتركه فارغاً للكشف التلقائي)
+const USERNAME = process.env.MC_USER || 'AFKBOT';
+const VERSION = process.env.MC_VERSION || '1.20.4'; // مثال: 1.20.4 (اتركه فارغاً للكشف التلقائي)
 const AUTH = process.env.MC_AUTH || 'offline';       // offline للكراك، microsoft للأصلي
-const PASSWORD = process.env.pinkpin123@ || '';      // اختياري: للسيرفرات التي فيها /register و /login
+const PASSWORD = process.env.MC_PASSWORD || 'pinkpin123@';      // اختياري: للسيرفرات التي فيها /register و /login
 
 const BASE_DELAY = 10000;  // أول إعادة اتصال بعد 10 ثواني
 const MAX_DELAY = 120000;  // أقصى انتظار دقيقتان
