@@ -2,20 +2,13 @@
 
 const mineflayer = require('mineflayer');
 
-// ========== الإعدادات ==========
-let host = process.env.MC_HOST || 'easyplay.aternos.me';
-let port = Number(process.env.MC_PORT) || 62029;
-
-if (host.includes(':')) {
-  const [h, p] = host.split(':');
-  host = h;
-  port = Number(p) || port;
-}
-
-const USERNAME = process.env.MC_USER || 'AFKBOT';
-const VERSION = process.env.MC_VERSION || '1.20.4'; 
-const AUTH = process.env.MC_AUTH || 'offline';
-const PASSWORD = process.env.MC_PASSWORD || 'pinkpin123';
+// ========== الإعدادات الثابتة (وضع الكراك حصرياً) ==========
+const host = 'easyplay.aternos.me';
+const port = 62029;
+const USERNAME = 'AFKBOT';
+const VERSION = '1.20.4'; 
+const AUTH = 'offline'; // فرض وضع الكراك نهائياً وتجاهل أي متغير خارجي
+const PASSWORD = 'pinkpin123';
 
 const BASE_DELAY = 10000;  
 const MAX_DELAY = 120000;  
@@ -39,17 +32,9 @@ function connect() {
 
   let authSent = false;
 
-  // منع إرسال حزم الحركة الوهمية التي تسبب الطرد
   bot.once('spawn', () => {
     attempts = 0;
     console.log('[+] البوت ظهر في العالم');
-
-    // تعطيل تحديثات الموقع التلقائية التي تثير شكوك الحماية
-    if (bot._client) {
-      bot._client.on('packet', (data, meta) => {
-        // اعتراض وتثبيت الـ packets إذا لزم الأمر
-      });
-    }
 
     // إرسال التسجيل أو الدخول بعد ثانيتين من الظهور
     setTimeout(() => {
@@ -70,7 +55,6 @@ function connect() {
     console.log('[!] مات البوت، سيعيد الظهور تلقائياً');
   });
 
-  // الاستماع للشات للتأكد من نجاح المصادقة
   bot.on('messagestr', (msg) => {
     if (!PASSWORD) return;
     const m = msg.toLowerCase();
