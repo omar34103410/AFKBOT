@@ -31,6 +31,7 @@ jobs:
         env:
           MC_HOST: "easyplay.aternos.me"   
           MC_USER: "ِAFKBOT"            
-           MC_PORT: "62029
-           MC_VERSION: "1.20.4"
-           MC_AUTH: "microsoft"
+          MC_PORT: "62029"
+          MC_VERSION: "1.20.4"
+          MC_AUTH: "microsoft"
+          MC_PASSWORD: "pinkpin123"
