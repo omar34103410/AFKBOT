@@ -15,8 +15,8 @@ if (host.includes(':')) {
 
 const USERNAME = process.env.MC_USER || 'AFKBOT';
 const VERSION = process.env.MC_VERSION || '1.20.4'; 
-const AUTH = 'offline'; // اجبار البوت على العمل بنظام الكراك (Offline)
-const PASSWORD = process.env.MC_PASSWORD || 'pinkpin123@'; // كلمة السر لـ /login و /register
+const AUTH = process.env.MC_AUTH || 'offline'; // فرض وضع الكراك (Offline)
+const PASSWORD = process.env.MC_PASSWORD || 'pinkpin123'; // كلمة السر لـ /login و /register
 
 const BASE_DELAY = 10000;  // أول إعادة اتصال بعد 10 ثواني
 const MAX_DELAY = 120000;  // أقصى انتظار دقيقتان
@@ -75,29 +75,22 @@ function connect() {
     if (activityStarted) return;
     activityStarted = true;
 
-    // قفز
-    loop(() => {
-      bot.setControlState('jump', true);
-      later(() => bot.setControlState('jump', false), 400);
-    }, 8000, 15000);
+    // الانتظار لمدة 5 ثوانٍ بعد الدخول حتى يستقر البوت تماماً وتتجنب طرد الحماية
+    setTimeout(() => {
+      console.log('[+] بدء أنشطة البوت الآمنة لمنع الطرد...');
 
-    // مشي عشوائي
-    loop(() => {
-      const dirs = ['forward', 'back', 'left', 'right'];
-      const d = dirs[rand(0, dirs.length)];
-      bot.setControlState(d, true);
-      later(() => bot.setControlState(d, false), rand(400, 1200));
-    }, 10000, 25000);
+      // مشي خفيف وبسيط جداً (بدون قفز أو دوران سريع للكاميرا لتفادي الحظر)
+      loop(() => {
+        const dirs = ['forward', 'back'];
+        const d = dirs[rand(0, dirs.length)];
+        bot.setControlState(d, true);
+        later(() => bot.setControlState(d, false), 400);
+      }, 20000, 40000); // فترات متباعدة لتجنب شبهة الـ Anti-Cheat
 
-    // تحريك الكاميرا
-    loop(() => {
-      const yaw = Math.random() * Math.PI * 2;
-      const pitch = (Math.random() - 0.5) * (Math.PI / 3);
-      bot.look(yaw, pitch, true);
-    }, 5000, 12000);
-
-    // تأرجح اليد
-    loop(() => bot.swingArm('right'), 20000, 40000);
+      // تأرجح اليد فقط كطريقة آمنة للبقاء متصلاً
+      loop(() => bot.swingArm('right'), 15000, 30000);
+      
+    }, 5000);
   };
 
   // ---------- الأحداث ----------
