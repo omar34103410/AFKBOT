@@ -1,89 +1,64 @@
-'use strict';
+const mineflayer = require("mineflayer");
 
-const mineflayer = require('mineflayer');
+const options = {
+  host: "easyplay.aternos.me",
+  port: 62029,
+  username: "AFKBOT",
+  auth: "microsoft",
+  version: false,
+  checkTimeoutInterval: 60 * 1000
+};
 
-// ========== إعدادات البوت (مضبوطة كراك حصرياً لتجنب مايكروسوفت) ==========
-const host = 'easyplay.aternos.me';
-const port = 62029;
-const USERNAME = 'AFKBOT';
-const VERSION = '1.20.4'; 
-const AUTH = 'offline'; // إجبار البوت على العمل بنظام الكراك قطعيّاً
-const PASSWORD = 'pinkpin123';
+let bot;
+let reconnecting = false;
 
-const BASE_DELAY = 10000;  
-const MAX_DELAY = 120000;  
+function createBot() {
+  reconnecting = false;
 
-let attempts = 0;
+  bot = mineflayer.createBot(options);
 
-function connect() {
-  console.log(`[+] الاتصال بـ ${host}:${port} باسم ${USERNAME} (auth=${AUTH})`);
+  bot.once("login", () => {
+    console.log("[+] تم تسجيل الدخول بنجاح");
+  });
 
-  const options = {
-    host,
-    port,
-    username: USERNAME,
-    auth: AUTH,
-    viewDistance: 'tiny',
-    hideErrors: false,
-  };
-  if (VERSION) options.version = VERSION;
+  bot.once("spawn", () => {
+    console.log("[+] البوت دخل العالم");
 
-  const bot = mineflayer.createBot(options);
+    // منع الطرد بسبب AFK
+    setInterval(() => {
+      if (!bot.entity) return;
 
-  let authSent = false;
+      bot.setControlState("jump", true);
+      setTimeout(() => bot.setControlState("jump", false), 500);
+    }, 60 * 1000);
+  });
 
-  bot.once('spawn', () => {
-    attempts = 0;
-    console.log('[+] البوت ظهر في العالم');
+  bot.on("kicked", (reason) => {
+    console.log("[!] تم طرد البوت من السيرفر:");
+    console.log(reason);
+  });
 
-    // إرسال التسجيل / الدخول بعد ثانيتين من ظهور البوت
+  bot.on("error", (err) => {
+    console.log("[!] حدث خطأ:");
+    console.log(err.message || err);
+  });
+
+  bot.on("end", (reason) => {
+    console.log("[!] انقطع الاتصال:");
+    console.log(reason);
+
+    if (reconnecting) return;
+    reconnecting = true;
+
+    console.log("[+] إعادة المحاولة بعد 30 ثانية...");
     setTimeout(() => {
-      if (PASSWORD && !authSent) {
-        authSent = true;
-        console.log('[+] إرسال أمر التسجيل /register...');
-        bot.chat(`/register ${PASSWORD} ${PASSWORD}`);
-        
-        setTimeout(() => {
-          console.log('[+] إرسال أمر تسجيل الدخول /login...');
-          bot.chat(`/login ${PASSWORD}`);
-        }, 2000);
-      }
-    }, 2000);
-  });
+      try {
+        bot.end();
+      } catch (e) {}
 
-  bot.on('death', () => {
-    console.log('[!] مات البوت، سيعيد الظهور تلقائياً');
-  });
-
-  bot.on('messagestr', (msg) => {
-    if (!PASSWORD) return;
-    const m = msg.toLowerCase();
-    if (m.includes('/register') && !authSent) {
-      authSent = true;
-      bot.chat(`/register ${PASSWORD} ${PASSWORD}`);
-    } else if (m.includes('/login') && !authSent) {
-      authSent = true;
-      bot.chat(`/login ${PASSWORD}`);
-    }
-  });
-
-  bot.on('kicked', (reason) => {
-    const text = typeof reason === 'string' ? reason : JSON.stringify(reason);
-    console.log('[!] تم الطرد:', text);
-  });
-
-  bot.on('error', (err) => console.log('[!] خطأ:', err.message));
-
-  bot.once('end', (reason) => {
-    authSent = false;
-    attempts += 1;
-    const delay = Math.min(BASE_DELAY * 2 ** (attempts - 1), MAX_DELAY);
-    console.log(`[!] انقطع الاتصال (${reason}). إعادة المحاولة بعد ${delay / 1000} ثانية...`);
-    setTimeout(connect, delay);
+      createBot();
+    }, 30 * 1000);
   });
 }
 
-process.on('uncaughtException', (e) => console.log('[!] خطأ غير متوقع:', e.message));
-process.on('unhandledRejection', (e) => console.log('[!] وعد مرفوض:', e));
-
-connect();
+createBot();
