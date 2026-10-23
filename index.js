@@ -2,7 +2,7 @@
 
 const mineflayer = require('mineflayer');
 
-// ========== الإعدادات (من متغيرات البيئة / Secrets) ==========
+// ========== الإعدادات ==========
 let host = process.env.MC_HOST || 'easyplay.aternos.me';
 let port = Number(process.env.MC_PORT) || 62029;
 
@@ -14,9 +14,9 @@ if (host.includes(':')) {
 }
 
 const USERNAME = process.env.MC_USER || 'AFKBOT';
-const VERSION = process.env.MC_VERSION || '1.20.4'; // مثال: 1.20.4 (اتركه فارغاً للكشف التلقائي)
-const AUTH = process.env.MC_AUTH || 'offline';       // offline للكراك، microsoft للأصلي
-const PASSWORD = process.env.MC_PASSWORD || 'pinkpin123@';      // اختياري: للسيرفرات التي فيها /register و /login
+const VERSION = process.env.MC_VERSION || '1.20.4'; 
+const AUTH = 'offline'; // اجبار البوت على العمل بنظام الكراك (Offline)
+const PASSWORD = process.env.MC_PASSWORD || 'pinkpin123@'; // كلمة السر لـ /login و /register
 
 const BASE_DELAY = 10000;  // أول إعادة اتصال بعد 10 ثواني
 const MAX_DELAY = 120000;  // أقصى انتظار دقيقتان
@@ -61,10 +61,10 @@ function connect() {
     timers.clear();
   };
 
-  // حلقة بفترات عشوائية؛ تتوقف تلقائياً مع انتهاء الاتصال
+  // حلقة بفترات عشوائية
   const loop = (fn, min, max) => {
     const run = () => {
-      if (!bot.entity) return later(run, 2000); // ننتظر حتى يظهر البوت (بعد الموت مثلاً)
+      if (!bot.entity) return later(run, 2000); 
       try { fn(); } catch (e) { console.log('[!] خطأ في الحركة:', e.message); }
       later(run, rand(min, max));
     };
@@ -72,7 +72,7 @@ function connect() {
   };
 
   const startActivity = () => {
-    if (activityStarted) return; // يمنع تكرار الحلقات عند كل spawn
+    if (activityStarted) return;
     activityStarted = true;
 
     // قفز
@@ -101,10 +101,10 @@ function connect() {
   };
 
   // ---------- الأحداث ----------
-  bot.on('login', () => console.log('[+] تم تسجيل الدخول'));
+  bot.on('login', () => console.log('[+] تم تسجيل الدخول بنجاح (كراك)'));
 
   bot.on('spawn', () => {
-    attempts = 0; // نجح الاتصال، نصفّر عداد المحاولات
+    attempts = 0; 
     console.log('[+] البوت ظهر في العالم');
     startActivity();
   });
@@ -123,9 +123,11 @@ function connect() {
     if (m.includes('/register')) {
       lastAuthChat = now;
       bot.chat(`/register ${PASSWORD} ${PASSWORD}`);
+      console.log('[+] تم إرسال أمر التسجيل /register');
     } else if (m.includes('/login')) {
       lastAuthChat = now;
       bot.chat(`/login ${PASSWORD}`);
+      console.log('[+] تم إرسال أمر تسجيل الدخول /login');
     }
   });
 
@@ -136,7 +138,6 @@ function connect() {
 
   bot.on('error', (err) => console.log('[!] خطأ:', err.message));
 
-  // 'end' يُطلق دائماً عند انتهاء الاتصال (طرد أو انقطاع أو خطأ)
   bot.once('end', (reason) => {
     stop();
     attempts += 1;
