@@ -2,13 +2,13 @@
 
 const mineflayer = require('mineflayer');
 
-// ========== الإعدادات الثابتة (وضع الكراك حصرياً) ==========
-const host = 'easyplay.aternos.me';
-const port = 62029;
-const USERNAME = 'AFKBOT';
-const VERSION = '1.20.4'; 
-const AUTH = 'offline'; // فرض وضع الكراك نهائياً وتجاهل أي متغير خارجي
-const PASSWORD = 'pinkpin123';
+// ========== الإعدادات ==========
+const host = process.env.MC_HOST || 'easyplay.aternos.me';
+const port = Number(process.env.MC_PORT) || 62029;
+const USERNAME = process.env.MC_USER || 'AFKBOT';
+const VERSION = process.env.MC_VERSION || '1.20.4'; 
+const AUTH = process.env.MC_AUTH || 'offline';
+const PASSWORD = process.env.MC_PASSWORD || 'pinkpin123';
 
 const BASE_DELAY = 10000;  
 const MAX_DELAY = 120000;  
@@ -36,7 +36,6 @@ function connect() {
     attempts = 0;
     console.log('[+] البوت ظهر في العالم');
 
-    // إرسال التسجيل أو الدخول بعد ثانيتين من الظهور
     setTimeout(() => {
       if (PASSWORD && !authSent) {
         authSent = true;
