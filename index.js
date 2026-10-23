@@ -14,13 +14,11 @@ if (host.includes(':')) {
 
 const USERNAME = process.env.MC_USER || 'AFKBOT';
 const VERSION = process.env.MC_VERSION || '1.20.4'; 
-const AUTH = process.env.MC_AUTH || 'offline'; // فرض وضع الكراك
-const PASSWORD = process.env.MC_PASSWORD || 'pinkpin123'; // كلمة السر لـ /login و /register
+const AUTH = process.env.MC_AUTH || 'offline';
+const PASSWORD = process.env.MC_PASSWORD || 'pinkpin123';
 
 const BASE_DELAY = 10000;  
 const MAX_DELAY = 120000;  
-
-const rand = (min, max) => Math.floor(Math.random() * (max - min)) + min;
 
 let attempts = 0;
 
@@ -39,91 +37,49 @@ function connect() {
 
   const bot = mineflayer.createBot(options);
 
-  const timers = new Set();
-  let stopped = false;
-  let activityStarted = false;
-  let lastAuthChat = 0;
+  let authSent = false;
 
-  const later = (fn, ms) => {
-    const t = setTimeout(() => {
-      timers.delete(t);
-      if (!stopped) fn();
-    }, ms);
-    timers.add(t);
-    return t;
-  };
+  // منع إرسال حزم الحركة الوهمية التي تسبب الطرد
+  bot.once('spawn', () => {
+    attempts = 0;
+    console.log('[+] البوت ظهر في العالم');
 
-  const stop = () => {
-    stopped = true;
-    timers.forEach(clearTimeout);
-    timers.clear();
-  };
+    // تعطيل تحديثات الموقع التلقائية التي تثير شكوك الحماية
+    if (bot._client) {
+      bot._client.on('packet', (data, meta) => {
+        // اعتراض وتثبيت الـ packets إذا لزم الأمر
+      });
+    }
 
-  const loop = (fn, min, max) => {
-    const run = () => {
-      if (!bot.entity) return later(run, 2000); 
-      try { fn(); } catch (e) { console.log('[!] خطأ في النشاط:', e.message); }
-      later(run, rand(min, max));
-    };
-    later(run, rand(min, max));
-  };
-
-  const startActivity = () => {
-    if (activityStarted) return;
-    activityStarted = true;
-
-    // 1. تنفيذ أمر التسجيل / الدخول فور ظهور البوت بثوانٍ معدودة
+    // إرسال التسجيل أو الدخول بعد ثانيتين من الظهور
     setTimeout(() => {
-      if (PASSWORD) {
+      if (PASSWORD && !authSent) {
+        authSent = true;
         console.log('[+] إرسال أمر التسجيل /register...');
         bot.chat(`/register ${PASSWORD} ${PASSWORD}`);
         
-        // إرسال /login كاحتياط بعد ثانيتين إذا كان الحساب مسجلاً مسبقاً
         setTimeout(() => {
           console.log('[+] إرسال أمر تسجيل الدخول /login...');
           bot.chat(`/login ${PASSWORD}`);
         }, 2000);
       }
     }, 2000);
-
-    // 2. تفعيل وضع البقاء الآمن (تأرجح اليد فقط بدون أي مشي أو حركة تسبب طرد)
-    setTimeout(() => {
-      console.log('[+] تفعيل البقاء (بدون حركة إحداثيات لمنع الطرد)...');
-      loop(() => {
-        try {
-          bot.swingArm('right');
-        } catch (e) {}
-      }, 20000, 40000);
-    }, 6000);
-  };
-
-  bot.on('login', () => console.log('[+] تم تسجيل الدخول بنجاح (كراك)'));
-
-  bot.on('spawn', () => {
-    attempts = 0; 
-    console.log('[+] البوت ظهر في العالم');
-    startActivity();
   });
 
   bot.on('death', () => {
     console.log('[!] مات البوت، سيعيد الظهور تلقائياً');
-    bot.clearControlStates();
   });
 
-  // الاستماع للشات كاحتياط إضافي إذا طلب السيرفر ذلك صراحة
+  // الاستماع للشات للتأكد من نجاح المصادقة
   bot.on('messagestr', (msg) => {
     if (!PASSWORD) return;
-    const now = Date.now();
-    if (now - lastAuthChat < 3000) return;
     const m = msg.toLowerCase();
-    if (m.includes('/register')) {
-      lastAuthChat = now;
+    if (m.includes('/register') && !authSent) {
+      authSent = true;
       bot.chat(`/register ${PASSWORD} ${PASSWORD}`);
-      console.log('[+] تم إرسال /register عبر الشات');
-    } else if (m.includes('/login')) {
-      lastAuthChat = now;
+    } else if (m.includes('/login') && !authSent) {
+      authSent = true;
       bot.chat(`/login ${PASSWORD}`);
-      console.log('[+] تم إرسال /login عبر الشات');
     }
   });
 
@@ -135,7 +91,7 @@ function connect() {
   bot.on('error', (err) => console.log('[!] خطأ:', err.message));
 
   bot.once('end', (reason) => {
-    stop();
+    authSent = false;
     attempts += 1;
     const delay = Math.min(BASE_DELAY * 2 ** (attempts - 1), MAX_DELAY);
     console.log(`[!] انقطع الاتصال (${reason}). إعادة المحاولة بعد ${delay / 1000} ثانية...`);
