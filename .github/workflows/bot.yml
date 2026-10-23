@@ -23,15 +23,15 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies quickly
+        run: npm install --no-audit --no-fund --prefer-offline
 
       - name: Run bot
         run: timeout 350m node index.js || true
         env:
-          MC_HOST: "easyplay.aternos.me"   
-          MC_USER: "ِAFKBOT"            
+          MC_HOST: "easyplay.aternos.me"    
+          MC_USER: "AFKBOT"            
           MC_PORT: "62029"
           MC_VERSION: "1.20.4"
-          MC_AUTH: "microsoft"
+          MC_AUTH: "offline"        # تم التعديل هنا ليعمل كـ كراك بدون متصفح
           MC_PASSWORD: "pinkpin123"
