@@ -33,5 +33,5 @@ jobs:
           MC_USER: "AFKBOT"            
           MC_PORT: "62029"
           MC_VERSION: "1.20.4"
-          MC_AUTH: "offline"        # تم التعديل هنا ليعمل كـ كراك بدون متصفح
+          MC_AUTH: "offline"        # وضع الكراك الإلزامي
           MC_PASSWORD: "pinkpin123"
