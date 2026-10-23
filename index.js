@@ -1,0 +1,152 @@
+'use strict';
+
+const mineflayer = require('mineflayer');
+
+// ========== الإعدادات (من متغيرات البيئة / Secrets) ==========
+let host = process.env.easyplay.aternos.me || 'localhost';
+let port = Number(process.env.62029) || 25565;
+
+// دعم الشكل ip:port
+if (host.includes(':')) {
+  const [h, p] = host.split(':');
+  host = h;
+  port = Number(p) || port;
+}
+
+const USERNAME = process.env.AFKBOT || 'AFK_Bot';
+const VERSION = process.env.1.20.4 || undefined; // مثال: 1.20.4 (اتركه فارغاً للكشف التلقائي)
+const AUTH = process.env.MC_AUTH || 'offline';       // offline للكراك، microsoft للأصلي
+const PASSWORD = process.env.pinkpin123@ || '';      // اختياري: للسيرفرات التي فيها /register و /login
+
+const BASE_DELAY = 10000;  // أول إعادة اتصال بعد 10 ثواني
+const MAX_DELAY = 120000;  // أقصى انتظار دقيقتان
+
+const rand = (min, max) => Math.floor(Math.random() * (max - min)) + min;
+
+let attempts = 0;
+
+function connect() {
+  console.log(`[+] الاتصال بـ ${host}:${port} باسم ${USERNAME} (auth=${AUTH})`);
+
+  const options = {
+    host,
+    port,
+    username: USERNAME,
+    auth: AUTH,
+    viewDistance: 'tiny',
+    hideErrors: false,
+  };
+  if (VERSION) options.version = VERSION;
+
+  const bot = mineflayer.createBot(options);
+
+  // ---------- إدارة المؤقتات لهذا البوت فقط ----------
+  const timers = new Set();
+  let stopped = false;
+  let activityStarted = false;
+  let lastAuthChat = 0;
+
+  const later = (fn, ms) => {
+    const t = setTimeout(() => {
+      timers.delete(t);
+      if (!stopped) fn();
+    }, ms);
+    timers.add(t);
+    return t;
+  };
+
+  const stop = () => {
+    stopped = true;
+    timers.forEach(clearTimeout);
+    timers.clear();
+  };
+
+  // حلقة بفترات عشوائية؛ تتوقف تلقائياً مع انتهاء الاتصال
+  const loop = (fn, min, max) => {
+    const run = () => {
+      if (!bot.entity) return later(run, 2000); // ننتظر حتى يظهر البوت (بعد الموت مثلاً)
+      try { fn(); } catch (e) { console.log('[!] خطأ في الحركة:', e.message); }
+      later(run, rand(min, max));
+    };
+    later(run, rand(min, max));
+  };
+
+  const startActivity = () => {
+    if (activityStarted) return; // يمنع تكرار الحلقات عند كل spawn
+    activityStarted = true;
+
+    // قفز
+    loop(() => {
+      bot.setControlState('jump', true);
+      later(() => bot.setControlState('jump', false), 400);
+    }, 8000, 15000);
+
+    // مشي عشوائي
+    loop(() => {
+      const dirs = ['forward', 'back', 'left', 'right'];
+      const d = dirs[rand(0, dirs.length)];
+      bot.setControlState(d, true);
+      later(() => bot.setControlState(d, false), rand(400, 1200));
+    }, 10000, 25000);
+
+    // تحريك الكاميرا
+    loop(() => {
+      const yaw = Math.random() * Math.PI * 2;
+      const pitch = (Math.random() - 0.5) * (Math.PI / 3);
+      bot.look(yaw, pitch, true);
+    }, 5000, 12000);
+
+    // تأرجح اليد
+    loop(() => bot.swingArm('right'), 20000, 40000);
+  };
+
+  // ---------- الأحداث ----------
+  bot.on('login', () => console.log('[+] تم تسجيل الدخول'));
+
+  bot.on('spawn', () => {
+    attempts = 0; // نجح الاتصال، نصفّر عداد المحاولات
+    console.log('[+] البوت ظهر في العالم');
+    startActivity();
+  });
+
+  bot.on('death', () => {
+    console.log('[!] مات البوت، سيعيد الظهور تلقائياً');
+    bot.clearControlStates();
+  });
+
+  // تسجيل دخول تلقائي لسيرفرات الكراك
+  bot.on('messagestr', (msg) => {
+    if (!PASSWORD) return;
+    const now = Date.now();
+    if (now - lastAuthChat < 3000) return;
+    const m = msg.toLowerCase();
+    if (m.includes('/register')) {
+      lastAuthChat = now;
+      bot.chat(`/register ${PASSWORD} ${PASSWORD}`);
+    } else if (m.includes('/login')) {
+      lastAuthChat = now;
+      bot.chat(`/login ${PASSWORD}`);
+    }
+  });
+
+  bot.on('kicked', (reason) => {
+    const text = typeof reason === 'string' ? reason : JSON.stringify(reason);
+    console.log('[!] تم الطرد:', text);
+  });
+
+  bot.on('error', (err) => console.log('[!] خطأ:', err.message));
+
+  // 'end' يُطلق دائماً عند انتهاء الاتصال (طرد أو انقطاع أو خطأ)
+  bot.once('end', (reason) => {
+    stop();
+    attempts += 1;
+    const delay = Math.min(BASE_DELAY * 2 ** (attempts - 1), MAX_DELAY);
+    console.log(`[!] انقطع الاتصال (${reason}). إعادة المحاولة بعد ${delay / 1000} ثانية...`);
+    setTimeout(connect, delay);
+  });
+}
+
+process.on('uncaughtException', (e) => console.log('[!] خطأ غير متوقع:', e.message));
+process.on('unhandledRejection', (e) => console.log('[!] وعد مرفوض:', e));
+
+connect();
