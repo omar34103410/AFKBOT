@@ -2,13 +2,13 @@
 
 const mineflayer = require('mineflayer');
 
-// ========== الإعدادات ==========
-const host = process.env.MC_HOST || 'easyplay.aternos.me';
-const port = Number(process.env.MC_PORT) || 62029;
-const USERNAME = process.env.MC_USER || 'AFKBOT';
-const VERSION = process.env.MC_VERSION || '1.20.4'; 
-const AUTH = process.env.MC_AUTH || 'offline';
-const PASSWORD = process.env.MC_PASSWORD || 'pinkpin123';
+// ========== إعدادات البوت (مضبوطة كراك حصرياً لتجنب مايكروسوفت) ==========
+const host = 'easyplay.aternos.me';
+const port = 62029;
+const USERNAME = 'AFKBOT';
+const VERSION = '1.20.4'; 
+const AUTH = 'offline'; // إجبار البوت على العمل بنظام الكراك قطعيّاً
+const PASSWORD = 'pinkpin123';
 
 const BASE_DELAY = 10000;  
 const MAX_DELAY = 120000;  
@@ -36,6 +36,7 @@ function connect() {
     attempts = 0;
     console.log('[+] البوت ظهر في العالم');
 
+    // إرسال التسجيل / الدخول بعد ثانيتين من ظهور البوت
     setTimeout(() => {
       if (PASSWORD && !authSent) {
         authSent = true;
