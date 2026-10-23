@@ -1,37 +1,36 @@
 name: Minecraft Bot
- 
+
 on:
   workflow_dispatch:        # تشغيل يدوي من تبويب Actions
   schedule:
-    - cron: '0 */7 * * *'   # إعادة التشغيل كل 6 ساعات
- 
+    - cron: '0 */6 * * *'   # إعادة التشغيل كل 6 ساعات
+
 concurrency:
   group: mc-bot
   cancel-in-progress: false
- 
+
 jobs:
   run-bot:
     runs-on: ubuntu-latest
     timeout-minutes: 355
- 
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
- 
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
- 
+
       - name: Install dependencies
         run: npm install
- 
+
       - name: Run bot
-        run: timeout 5h50m node index.js || true
+        run: timeout 350m node index.js || true
         env:
-          MC_HOST: ${{ secrets.MC_HOST }}
-          MC_PORT: ${{ secrets.MC_PORT }}
-          MC_USER: ${{ secrets.MC_USER }}
-          MC_VERSION: ${{ secrets.MC_VERSION }}
-          MC_AUTH: ${{ secrets.MC_AUTH }}
-          MC_PASSWORD: ${{ secrets.MC_PASSWORD }}
+          MC_HOST: "easyplay.aternos.me"   
+          MC_USER: "ِAFKBOT"            
+           MC_PORT: "62029
+           MC_VERSION: "1.20.4"
+           MC_AUTH: "microsoft"
