@@ -1,64 +1,41 @@
 const mineflayer = require("mineflayer");
 
-const options = {
+const bot = mineflayer.createBot({
   host: "easyplay.aternos.me",
   port: 62029,
   username: "AFKBOT",
-  auth: "microsoft",
+  auth: "offline",
   version: false,
   checkTimeoutInterval: 60 * 1000
-};
+});
 
-let bot;
-let reconnecting = false;
+bot.on("login", () => {
+  console.log("[+] تم تسجيل الدخول");
+});
 
-function createBot() {
-  reconnecting = false;
+bot.on("spawn", () => {
+  console.log("[+] البوت دخل السيرفر");
 
-  bot = mineflayer.createBot(options);
+  setInterval(() => {
+    if (!bot.entity) return;
 
-  bot.once("login", () => {
-    console.log("[+] تم تسجيل الدخول بنجاح");
-  });
+    bot.setControlState("jump", true);
+    setTimeout(() => bot.setControlState("jump", false), 500);
+  }, 60 * 1000);
+});
 
-  bot.once("spawn", () => {
-    console.log("[+] البوت دخل العالم");
+bot.on("kicked", (reason) => {
+  console.log("[!] تم طرد البوت:");
+  console.log(reason);
+});
 
-    // منع الطرد بسبب AFK
-    setInterval(() => {
-      if (!bot.entity) return;
+bot.on("error", (err) => {
+  console.log("[!] خطأ:");
+  console.log(err.message || err);
+});
 
-      bot.setControlState("jump", true);
-      setTimeout(() => bot.setControlState("jump", false), 500);
-    }, 60 * 1000);
-  });
-
-  bot.on("kicked", (reason) => {
-    console.log("[!] تم طرد البوت من السيرفر:");
-    console.log(reason);
-  });
-
-  bot.on("error", (err) => {
-    console.log("[!] حدث خطأ:");
-    console.log(err.message || err);
-  });
-
-  bot.on("end", (reason) => {
-    console.log("[!] انقطع الاتصال:");
-    console.log(reason);
-
-    if (reconnecting) return;
-    reconnecting = true;
-
-    console.log("[+] إعادة المحاولة بعد 30 ثانية...");
-    setTimeout(() => {
-      try {
-        bot.end();
-      } catch (e) {}
-
-      createBot();
-    }, 30 * 1000);
-  });
-}
-
-createBot();
+bot.on("end", (reason) => {
+  console.log("[!] انقطع الاتصال:");
+  console.log(reason);
+  process.exit(1);
+});
